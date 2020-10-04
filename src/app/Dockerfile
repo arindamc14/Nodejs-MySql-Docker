@@ -1,13 +1,15 @@
 FROM node:latest
 
-WORKDIR /src
+USER node
+
+WORKDIR /home/node/app
 
 COPY package*.json ./
 
 RUN npm install
 
-COPY . .
+COPY --chown=node:node . .
 
 EXPOSE 3000
 
-CMD [ "node", "src/app/main.js" ]
+CMD [ "node", "main.js" ]

@@ -1,5 +1,35 @@
 version: "3.8"
 services:
+
+
+  
+  app:    
+    build:
+      context: .
+      dockerfile: ./src/app/Dockerfile
+    image: nodejs
+    container_name: my-app
+    restart: unless-stopped
+    working_dir: /src
+    volumes:
+      - .:/home/node/app
+      - node_modules:/home/node/app/node_modules
+    links:
+      - db
+    ports:
+      - "80:3000"
+    entrypoint: /src/app/main.js
+    environment:
+      - MYSQL_DATABASE='usersdb'
+      - MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD
+      - MYSQL_HOSTNAME='db'
+
+    # networks:
+    #     - app-network
+    command: ./wait-for.sh db:27017 -- /home/node/app/node_modules/.bin/nodemon app.js
+
+
+
   nginx:
     image: nginx:latest
     container_name: nginx
@@ -11,32 +41,26 @@ services:
       - ./docker/nginx/nginx.conf:/etc/nginx/sites-available/default
     links:
       - app
-    env_file: ./.env
+    env_file: .env
 
-  app:
-    image: node:latest
-    container_name: my-app
-    working_dir: /src
-    volumes:
-      - .:/src
-    links:
-      - mysql
-    ports:
-      - "3000"
-    entrypoint: /src/main.js
-    env_file: ./.env
-    environment:
-      "NODE_ENV": "development"
-
-  mysql:
-    env_file: ./.env
-    image: mysql:5.7
+  
+  
+  db:
+    image: mysql
     container_name: mysql
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      "MYSQL_DATABASE": "users"
+      "MYSQL_ROOT_PASSWORD": $MYSQL_ROOT_PASSWORD
     volumes:
       - ./data/db:/var/lib/mysql
     restart: always
     ports:
       - "3306:3306"
-    environment:
-      "MYSQL_DATABASE": "users"
-      "MYSQL_ROOT_PASSWORD": "${MYSQL_ROOT_PASSWORD}"
+
+
+
+volumes:
+  dbdata:
+  node_modules:      
